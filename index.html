@@ -7,10 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>來點天氣吧</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="02.png" />
     <link rel="icon" type="image/png" href="02.png" />
-    <link rel="apple-touch-icon" href="02.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="02.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,7 +16,25 @@
     />
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <script>
+      // 設定 Tailwind 的擴充設定，方便管理顏色
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              glass: {
+                dark: "rgba(30, 30, 30, 0.4)",
+                light: "rgba(255, 255, 255, 0.5)", // 淺色玻璃透明度調高一點
+              },
+            },
+          },
+        },
+      };
+    </script>
+
     <style>
+      /* --- 全局設定 --- */
       * {
         margin: 0;
         padding: 0;
@@ -30,131 +45,214 @@
       body {
         font-family: "Kiwi Maru", serif;
         min-height: 100vh;
-        color: #1a1a1a;
         overflow-x: hidden;
-        transition: background 1.5s ease;
+        transition: background 1.5s ease, color 0.5s ease;
+        position: relative;
+        /* 預設顏色和文字顏色，讓它們可以被時間/模式 Class 覆蓋 */
+        color: #ffffff;
       }
 
-      /* 背景漸層 - 新海誠風格 */
+      /* ** 新增：淺色模式下文字變深 ** */
+      body.light-mode {
+        color: #1f2937;
+      }
+      /* ** 修正：深色模式下文字變白 ** */
+      body.dark-mode {
+        color: #ffffff;
+      }
+
+      /* --- 背景漸層 (時間控制) --- */
+      /* 這些 Class 將由 JS 依據時間控制，不受 light/dark 模式影響 */
       .bg-dawn {
         background: linear-gradient(
           to bottom,
-          #7d91ca 0%,
-          #9bc4e8 50%,
-          #f5e6bd 100%
+          #5d6d9c 0%,
+          #8baecf 50%,
+          #e0d2a8 100%
         );
       }
       .bg-morning {
         background: linear-gradient(
           to bottom,
-          #83b7df 0%,
-          #9bc4e8 50%,
-          #daeaf9 100%
+          #5c9ac7 0%,
+          #7db0d8 50%,
+          #c1dcf5 100%
         );
       }
       .bg-noon {
         background: linear-gradient(
           to bottom,
-          #108ed1 0%,
-          #42ade1 50%,
-          #a9d2ee 100%
+          #0d7cb8 0%,
+          #3a9ccf 50%,
+          #9bc4e0 100%
         );
       }
       .bg-afternoon {
         background: linear-gradient(
           to bottom,
-          #215a8d 0%,
-          #56b2e1 50%,
-          #cbe0f3 100%
+          #1a4d7a 0%,
+          #4a9ccc 50%,
+          #b8d4eb 100%
         );
       }
       .bg-sunset {
         background: linear-gradient(
           to bottom,
-          #a7b8d7 0%,
-          #d4c8d2 50%,
-          #ffe5d4 100%
+          #8a9ab8 0%,
+          #baadc5 50%,
+          #f0d5c4 100%
         );
       }
       .bg-evening {
         background: linear-gradient(
           to bottom,
-          #615f94 0%,
-          #a882b9 50%,
-          #e5beaf 100%
+          #4a4874 0%,
+          #8c6a9d 50%,
+          #ccaba0 100%
         );
       }
       .bg-night {
         background: linear-gradient(
           to bottom,
-          #191d27 0%,
-          #102751 50%,
-          #224376 100%
+          #0f1219 0%,
+          #0a1935 50%,
+          #152a4a 100%
         );
       }
       .bg-rainy {
         background: linear-gradient(
           to bottom,
-          #4c5b7c 0%,
-          #7e89a5 50%,
-          #a1a9c0 100%
+          #3b4761 0%,
+          #636c82 50%,
+          #8a91a3 100%
         );
       }
 
-      /* 玻璃質感卡片 */
-      .glass-card {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      /* 背景層 (固定位置，只做動畫/裝飾) */
+      #decorations {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+      }
+      .cloud-shape {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        filter: blur(30px);
+        animation: drift linear infinite;
+      }
+      @keyframes drift {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(100vw);
+        }
+      }
+      .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle ease-in-out infinite;
+      }
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+      .rain-drop {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.5);
+        width: 1px;
+        animation: rainfall linear infinite;
+      }
+      @keyframes rainfall {
+        to {
+          transform: translateY(100vh);
+        }
       }
 
-      /* 下拉式選單 */
+      /* --- 玻璃質感卡片 (受 light/dark 模式控制) --- */
+      .glass-card {
+        transition: all 0.3s ease;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+      }
+
+      /* 深色模式卡片樣式 (在 dark-mode class 下生效) */
+      body.dark-mode .glass-card {
+        background: rgba(30, 30, 30, 0.4);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* 淺色模式卡片樣式 (在 light-mode class 下生效) */
+      body.light-mode .glass-card {
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 8px 32px rgba(100, 100, 200, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.8); /* 淺色模式邊框更明顯 */
+      }
+
+      /* --- 下拉選單 (受 light/dark 模式控制) --- */
       .city-dropdown {
         position: relative;
-        display: inline-block;
         width: 100%;
-        max-width: 300px;
-        margin: 15px auto;
+        max-width: 180px;
+        z-index: 50;
       }
-
       .dropdown-btn {
         width: 100%;
-        padding: 12px 20px;
-        background: rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(15px);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 15px;
-        color: #1a1a1a;
-        font-weight: 500;
-        cursor: pointer;
-        font-size: 1.1rem;
+        padding: 8px 16px;
+        border-radius: 99px;
+        font-size: 1rem;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        transition: all 0.3s ease;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
       }
 
-      .dropdown-btn:hover {
-        background: rgba(255, 255, 255, 0.4);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      body.dark-mode .dropdown-btn {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      body.light-mode .dropdown-btn {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid white;
       }
 
       .dropdown-content {
         display: none;
         position: absolute;
+        top: 115%;
+        left: 0;
         width: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        border: 2px solid rgba(255, 255, 255, 0.8);
-        border-radius: 15px;
-        margin-top: 5px;
+        border-radius: 16px;
         max-height: 300px;
         overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         z-index: 100;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      body.dark-mode .dropdown-content {
+        background: rgba(30, 30, 30, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      body.light-mode .dropdown-content {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid white;
       }
 
       .dropdown-content.show {
@@ -162,436 +260,579 @@
       }
 
       .dropdown-item {
-        padding: 12px 20px;
+        padding: 12px 16px;
         cursor: pointer;
-        color: #1a1a1a;
-        font-weight: 400;
-        transition: all 0.2s ease;
+        transition: background 0.2s;
+      }
+      body.dark-mode .dropdown-item {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      body.light-mode .dropdown-item {
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       }
 
-      .dropdown-item:last-child {
-        border-bottom: none;
-      }
-
       .dropdown-item:hover {
-        background: rgba(100, 150, 200, 0.2);
-        font-weight: 500;
+        opacity: 0.8;
+      }
+      body.dark-mode .dropdown-item.selected {
+        background: rgba(255, 255, 255, 0.15);
+        font-weight: bold;
+      }
+      body.light-mode .dropdown-item.selected {
+        background: rgba(0, 0, 0, 0.05);
+        font-weight: bold;
       }
 
-      .dropdown-item.selected {
-        background: rgba(100, 150, 200, 0.3);
-        font-weight: 600;
+      /* --- 可愛切換開關 (受 light/dark 模式控制) --- */
+      .theme-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+        border-radius: 50px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        transition: all 0.5s ease;
+        overflow: hidden;
       }
 
-      /* Loading 動畫 */
+      /* 背景/邊框跟著模式走 */
+      body.dark-mode .theme-switch {
+        background: #1a1c29;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      body.light-mode .theme-switch {
+        background: #89cff0;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .theme-handle {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        left: 4px;
+        transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+          background 0.3s;
+        box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+      }
+      .theme-handle::before,
+      .theme-handle::after {
+        /* 月球坑洞 */
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        transition: opacity 0.3s;
+      }
+
+      /* 深色模式：月亮 */
+      body.dark-mode .theme-handle {
+        background: #d1d5db;
+      }
+      body.dark-mode .theme-handle::before {
+        top: 4px;
+        left: 4px;
+        width: 5px;
+        height: 5px;
+        background: #9ca3af;
+        opacity: 1;
+      }
+      body.dark-mode .theme-handle::after {
+        top: 10px;
+        left: 10px;
+        width: 3px;
+        height: 3px;
+        background: #9ca3af;
+        opacity: 1;
+      }
+
+      /* 淺色模式：太陽 */
+      body.light-mode .theme-handle {
+        transform: translateX(30px);
+        background: #fcd34d;
+      }
+      body.light-mode .theme-handle::before,
+      body.light-mode .theme-handle::after {
+        opacity: 0;
+      }
+
+      /* 星星/雲朵裝飾 */
+      .switch-decor {
+        position: absolute;
+        font-size: 10px;
+        transition: opacity 0.3s, transform 0.5s;
+      }
+      .stars {
+        right: 8px;
+        color: white;
+      }
+      .clouds {
+        left: 8px;
+        color: white;
+      }
+
+      body.dark-mode .stars {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      body.dark-mode .clouds {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      body.light-mode .stars {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      body.light-mode .clouds {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* --- 其他樣式維持不變 --- */
+      .temp-display {
+        font-size: 5.5rem;
+        font-weight: 300;
+        line-height: 1;
+        letter-spacing: -2px;
+      }
       .loading-screen {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
+        z-index: 999;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 999;
-        background: linear-gradient(to bottom, #56ccf2 0%, #2f80ed 100%);
+        flex-direction: column;
+        transition: opacity 0.5s;
       }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-20px);
-        }
+      body.dark-mode .loading-screen {
+        background: #1a1c29;
+        color: white;
       }
-
-      .cloud-icon {
-        font-size: 5rem;
-        animation: float 3s ease-in-out infinite;
-        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+      body.light-mode .loading-screen {
+        background: #e0f2fe;
+        color: #0284c7;
       }
-
-      /* 天氣卡片動畫 */
       .fade-in {
-        animation: fadeIn 0.8s ease-in;
+        animation: fadeIn 0.8s ease-out forwards;
+        opacity: 0;
       }
-
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
         to {
           opacity: 1;
-          transform: translateY(0);
         }
       }
-
-      /* 溫度顯示 */
-      .temp-display {
-        font-size: 5rem;
-        font-weight: 700;
-        line-height: 1;
-        text-shadow: 2px 2px 20px rgba(0, 0, 0, 0.1);
+      .fallback-emoji {
+        font-size: 4rem;
+        display: none;
       }
-
-      /* 稍後預報卡片 */
-      .forecast-scroll {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 15px;
-        padding: 0 20px 20px;
+      img.error + .fallback-emoji {
+        display: block;
       }
-
-      .mini-forecast-card {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        padding: 20px 15px;
-        text-align: center;
-        transition: all 0.3s ease;
-      }
-
-      .mini-forecast-card:hover {
-        transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.3);
+      img.error {
+        display: none;
       }
     </style>
   </head>
 
-  <body id="mainBody" class="bg-morning">
-    <!-- Loading Screen -->
+  <body id="mainBody" class="dark-mode bg-morning">
+    <div id="decorations"></div>
+
     <div id="loading" class="loading-screen">
-      <div class="cloud-icon">☁️</div>
-      <p
-        class="text-white text-xl mt-6 font-medium"
-        style="text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3)"
-      >
-        觀察天空中...
-      </p>
+      <div class="text-6xl animate-bounce">☁️</div>
+      <p class="text-lg mt-4 font-medium tracking-wider">正在觀測天空...</p>
     </div>
 
-    <!-- Status Bar -->
-    <div
-      class="glass-card sticky top-0 z-50 px-5 py-4 flex justify-between items-center"
-    >
+    <div class="relative z-0 min-h-screen flex flex-col p-6 max-w-md mx-auto">
       <div
-        id="currentCityName"
-        class="text-gray-800 text-xl font-bold drop-shadow-sm"
-        style="text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5)"
+        class="flex justify-between items-center mb-6 fade-in relative z-50"
+        style="animation-delay: 0.1s"
       >
-        📍 臺北市
-      </div>
-      <div
-        id="updateTime"
-        class="text-gray-700 text-sm bg-white bg-opacity-30 px-3 py-1 rounded-full"
-        style="text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3)"
-      >
-        更新中...
-      </div>
-    </div>
+        <div class="city-dropdown">
+          <div class="dropdown-btn glass-card" id="dropdownBtn">
+            <span>📍</span>
+            <span id="selectedCity" class="font-medium tracking-wide"
+              >臺北市</span
+            >
+            <span class="text-xs opacity-70">▼</span>
+          </div>
+          <div class="dropdown-content" id="dropdownContent"></div>
+        </div>
 
-    <!-- City Dropdown -->
-    <div class="px-5">
-      <div class="city-dropdown">
-        <button class="dropdown-btn" id="dropdownBtn">
-          <span id="selectedCity">臺北市</span>
-          <span>▼</span>
-        </button>
-        <div class="dropdown-content" id="dropdownContent">
-          <div class="dropdown-item selected" data-city="臺北市">臺北市</div>
-          <div class="dropdown-item" data-city="新北市">新北市</div>
-          <div class="dropdown-item" data-city="桃園市">桃園市</div>
-          <div class="dropdown-item" data-city="臺中市">臺中市</div>
-          <div class="dropdown-item" data-city="臺南市">臺南市</div>
-          <div class="dropdown-item" data-city="高雄市">高雄市</div>
-          <div class="dropdown-item" data-city="基隆市">基隆市</div>
-          <div class="dropdown-item" data-city="新竹市">新竹市</div>
-          <div class="dropdown-item" data-city="新竹縣">新竹縣</div>
-          <div class="dropdown-item" data-city="苗栗縣">苗栗縣</div>
-          <div class="dropdown-item" data-city="彰化縣">彰化縣</div>
-          <div class="dropdown-item" data-city="南投縣">南投縣</div>
-          <div class="dropdown-item" data-city="雲林縣">雲林縣</div>
-          <div class="dropdown-item" data-city="嘉義市">嘉義市</div>
-          <div class="dropdown-item" data-city="嘉義縣">嘉義縣</div>
-          <div class="dropdown-item" data-city="屏東縣">屏東縣</div>
-          <div class="dropdown-item" data-city="宜蘭縣">宜蘭縣</div>
-          <div class="dropdown-item" data-city="花蓮縣">花蓮縣</div>
-          <div class="dropdown-item" data-city="臺東縣">臺東縣</div>
-          <div class="dropdown-item" data-city="澎湖縣">澎湖縣</div>
-          <div class="dropdown-item" data-city="金門縣">金門縣</div>
-          <div class="dropdown-item" data-city="連江縣">連江縣</div>
+        <div class="theme-switch" id="themeToggle">
+          <div class="switch-decor stars">✨</div>
+          <div class="switch-decor clouds">☁️</div>
+          <div class="theme-handle"></div>
         </div>
       </div>
-    </div>
 
-    <!-- Main Content -->
-    <div
-      class="container mx-auto px-5 py-6 max-w-2xl fade-in"
-      id="mainContent"
-      style="display: none"
-    >
-      <!-- Hero Card -->
-      <div id="heroCard"></div>
-
-      <!-- Future Forecasts -->
-      <h3
-        class="text-gray-800 text-lg font-bold mb-4 px-1 drop-shadow-sm"
-        style="text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5)"
+      <div
+        id="mainContent"
+        class="flex-1 flex flex-col hidden fade-in relative z-0"
+        style="animation-delay: 0.3s"
       >
-        稍後預報
-      </h3>
-      <div class="forecast-scroll" id="futureForecasts"></div>
+        <div class="text-center mb-8 relative z-0">
+          <h1
+            id="clockTime"
+            class="text-6xl font-light tracking-wider drop-shadow-sm"
+          >
+            --:--
+          </h1>
+          <p id="clockDate" class="text-lg opacity-80 mt-1">--月--日</p>
+        </div>
+
+        <div id="heroCard"></div>
+
+        <div class="mt-8">
+          <h3
+            class="opacity-80 text-sm font-bold mb-3 px-1 flex items-center gap-2"
+          >
+            <span>🕒</span> 稍後預報
+          </h3>
+          <div class="grid grid-cols-2 gap-4" id="futureForecasts"></div>
+        </div>
+
+        <div class="mt-auto pt-6 text-center opacity-40 text-xs">
+          Weather Data provided by CWA
+        </div>
+      </div>
     </div>
 
     <script>
       const API_BASE_URL = "https://2025vc-weather.zeabur.app/api/weather";
       let currentCity = "臺北市";
 
-      // 天氣icon映射 - 更精緻的emoji組合
-      function getWeatherIcon(weather) {
-        if (!weather) return "🌤️";
-        if (weather.includes("晴")) return "☀️";
-        if (weather.includes("多雲")) return "⛅";
-        if (weather.includes("陰")) return "☁️";
-        if (weather.includes("雨")) return "🌧️";
-        if (weather.includes("雷")) return "⛈️";
-        if (weather.includes("雪")) return "❄️";
-        return "🌤️";
-      }
+      // 3D Icon 設定
+      const BASE_ICON_URL =
+        "https://cdn.jsdelivr.net/gh/microsoft/fluentui-system-icons@master/assets/Weather";
+      const ICON_MAP = {
+        sunny: `${BASE_ICON_URL}/Sunny/3d/sunny_3d.png`,
+        cloudy: `${BASE_ICON_URL}/Cloudy/3d/cloudy_3d.png`,
+        partlyCloudyDay: `${BASE_ICON_URL}/Partly%20Cloudy%20Day/3d/partly_cloudy_day_3d.png`,
+        partlyCloudyNight: `${BASE_ICON_URL}/Partly%20Cloudy%20Night/3d/partly_cloudy_night_3d.png`,
+        rain: `${BASE_ICON_URL}/Rain/3d/rain_3d.png`,
+        thunder: `${BASE_ICON_URL}/Thunderstorm/3d/thunderstorm_3d.png`,
+        snow: `${BASE_ICON_URL}/Snow/3d/snow_3d.png`,
+        clearNight: `${BASE_ICON_URL}/Clear%20Night/3d/clear_night_3d.png`,
+      };
 
-      // 時段判斷
-      function getTimePeriod(startTime) {
+      // --- 核心邏輯 ---
+
+      function getWeatherAssets(weatherText, startTime) {
         const hour = new Date(startTime).getHours();
-        if (hour >= 5 && hour < 7) return "清晨";
-        if (hour >= 7 && hour < 11) return "早晨";
-        if (hour >= 11 && hour < 14) return "中午";
-        if (hour >= 14 && hour < 17) return "下午";
-        if (hour >= 17 && hour < 19) return "黃昏";
-        if (hour >= 19 && hour < 22) return "晚上";
-        return "深夜";
+        const isNight = hour >= 18 || hour < 6;
+
+        let url = ICON_MAP.partlyCloudyDay;
+        let emoji = "⛅";
+
+        if (weatherText.includes("雷")) {
+          url = ICON_MAP.thunder;
+          emoji = "⛈️";
+        } else if (weatherText.includes("雪")) {
+          url = ICON_MAP.snow;
+          emoji = "❄️";
+        } else if (weatherText.includes("雨")) {
+          url = ICON_MAP.rain;
+          emoji = "🌧️";
+        } else if (weatherText.includes("多雲") || weatherText.includes("陰")) {
+          url = isNight ? ICON_MAP.partlyCloudyNight : ICON_MAP.cloudy;
+          emoji = isNight ? "☁️" : "☁️";
+        } else if (weatherText.includes("晴")) {
+          url = isNight ? ICON_MAP.clearNight : ICON_MAP.sunny;
+          emoji = isNight ? "🌙" : "☀️";
+        } else {
+          url = isNight ? ICON_MAP.partlyCloudyNight : ICON_MAP.partlyCloudyDay;
+          emoji = isNight ? "🌙" : "⛅";
+        }
+        return { url, emoji };
       }
 
-      // 背景顏色切換
-      function setBackgroundByTime(startTime, rainProb) {
-        const hour = new Date(startTime).getHours();
-        const body = document.getElementById("mainBody");
+      function getRelativeTimeLabel(startTime) {
+        const now = new Date();
+        const forecastDate = new Date(startTime);
+        const hour = forecastDate.getHours();
 
-        // 雨天優先
-        if (parseInt(rainProb) > 50) {
-          body.className = "bg-rainy";
-          return;
+        const diffDays = forecastDate.getDate() - now.getDate();
+
+        let period = "";
+        if (hour >= 5 && hour < 11) period = "早上";
+        else if (hour >= 11 && hour < 13) period = "中午";
+        else if (hour >= 13 && hour < 18) period = "下午";
+        else if (hour >= 18 && hour < 23) period = "晚上";
+        else period = "深夜";
+
+        if (diffDays === 0) {
+          // 檢查是否是現在這個時段
+          const currentHour = now.getHours();
+          if (
+            (hour >= 6 && hour < 18 && currentHour < 18) ||
+            hour >= 18 ||
+            (hour < 6 && currentHour >= 18) ||
+            currentHour < 6
+          ) {
+            return period; // 例如「早上」
+          }
+          return `今天${period}`;
+        } else if (diffDays === 1) {
+          return `明天${period}`;
+        } else {
+          return `後天${period}`;
         }
-
-        // 根據時段設定背景
-        if (hour >= 5 && hour < 7) body.className = "bg-dawn";
-        else if (hour >= 7 && hour < 11) body.className = "bg-morning";
-        else if (hour >= 11 && hour < 14) body.className = "bg-noon";
-        else if (hour >= 14 && hour < 17) body.className = "bg-afternoon";
-        else if (hour >= 17 && hour < 19) body.className = "bg-sunset";
-        else if (hour >= 19 && hour < 22) body.className = "bg-evening";
-        else body.className = "bg-night";
       }
 
-      // 穿搭建議
-      function getAdvice(rainProb, maxTemp) {
-        let rainIcon = "🌂";
-        let rainText = "免帶傘";
-        if (parseInt(rainProb) > 30) {
-          rainIcon = "☂️";
-          rainText = "記得帶傘喔";
-        }
-
-        let clothIcon = "👕";
-        let clothText = "Easy舒適穿";
-        if (parseInt(maxTemp) >= 28) {
-          clothIcon = "🎽";
-          clothText = "今仔日短袖就🉑";
-        } else if (parseInt(maxTemp) <= 20) {
-          clothIcon = "🧥";
-          clothText = "阿嬤讓你加件外套";
-        }
-
-        return { rainIcon, rainText, clothIcon, clothText };
-      }
-
-      // 渲染天氣資料
-      function renderWeather(data) {
+      function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const days = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
         document.getElementById(
-          "currentCityName"
-        ).textContent = `📍 ${data.city}`;
+          "clockTime"
+        ).textContent = `${hours}:${minutes}`;
+        document.getElementById("clockDate").textContent = `${
+          now.getMonth() + 1
+        }月${now.getDate()}日 ${days[now.getDay()]}`;
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
 
-        const forecasts = data.forecasts;
-        const current = forecasts[0];
-        const others = forecasts.slice(1);
+      // --- 修正背景邏輯，只依時間判斷 ---
+      function updateBackground(weather, startTime, rainProb) {
+        const body = document.getElementById("mainBody");
+        const hour = new Date(startTime).getHours();
 
-        // 設定背景
-        setBackgroundByTime(current.startTime, current.rain);
+        // 1. 移除所有背景 Class
+        body.className = body.className
+          .split(" ")
+          .filter((c) => !c.startsWith("bg-"))
+          .join(" ");
 
-        // 渲染主卡片
-        const advice = getAdvice(current.rain, current.maxTemp);
-        const period = getTimePeriod(current.startTime);
+        // 2. 判斷並加入新的背景 Class
+        if (parseInt(rainProb) > 60 || weather.includes("雨"))
+          body.classList.add("bg-rainy");
+        else if (hour >= 5 && hour < 7) body.classList.add("bg-dawn");
+        else if (hour >= 7 && hour < 11) body.classList.add("bg-morning");
+        else if (hour >= 11 && hour < 16) body.classList.add("bg-noon");
+        else if (hour >= 16 && hour < 18) body.classList.add("bg-sunset");
+        else if (hour >= 18 && hour < 20) body.classList.add("bg-evening");
+        else body.classList.add("bg-night");
+
+        // 3. 更新背景裝飾 (動畫)
+        const container = document.getElementById("decorations");
+        container.innerHTML = "";
+        const isNight = hour >= 18 || hour < 5;
+        const isRaining = parseInt(rainProb) > 40 || weather.includes("雨");
+
+        if (isRaining) {
+          for (let i = 0; i < 30; i++) {
+            const drop = document.createElement("div");
+            drop.className = "rain-drop";
+            drop.style.left = Math.random() * 100 + "%";
+            drop.style.height = Math.random() * 20 + 10 + "px";
+            drop.style.animationDuration = Math.random() * 0.5 + 0.5 + "s";
+            drop.style.animationDelay = Math.random() * 2 + "s";
+            container.appendChild(drop);
+          }
+        } else if (isNight) {
+          for (let i = 0; i < 40; i++) {
+            const star = document.createElement("div");
+            star.className = "star";
+            star.style.left = Math.random() * 100 + "%";
+            star.style.top = Math.random() * 60 + "%";
+            const size = Math.random() * 3 + 1 + "px";
+            star.style.width = size;
+            star.style.height = size;
+            star.style.animationDuration = Math.random() * 2 + 1 + "s";
+            star.style.animationDelay = Math.random() * 3 + "s";
+            container.appendChild(star);
+          }
+        } else {
+          for (let i = 0; i < 3; i++) {
+            const cloud = document.createElement("div");
+            cloud.className = "cloud-shape";
+            cloud.style.width = Math.random() * 150 + 100 + "px";
+            cloud.style.height = Math.random() * 150 + 100 + "px";
+            cloud.style.top = Math.random() * 40 + "%";
+            cloud.style.animationDuration = Math.random() * 20 + 20 + "s";
+            cloud.style.animationDelay = i * 5 + "s";
+            container.appendChild(cloud);
+          }
+        }
+      }
+
+      function renderWeather(data) {
+        document.getElementById("selectedCity").textContent = data.city;
+        const current = data.forecasts[0];
+        const others = data.forecasts.slice(1);
+
+        // **修正點：呼叫背景更新函式 (只依時間)**
+        updateBackground(current.weather, current.startTime, current.rain);
+
+        const assets = getWeatherAssets(current.weather, current.startTime);
         const avgTemp = Math.round(
           (parseInt(current.maxTemp) + parseInt(current.minTemp)) / 2
         );
 
-        document.getElementById("heroCard").innerHTML = `
-          <div class="glass-card rounded-3xl p-8 mb-6 text-center">
-            <div class="text-gray-700 text-sm font-medium mb-4 inline-block px-4 py-1 rounded-full bg-white bg-opacity-30" style="text-shadow: 0 1px 1px rgba(255,255,255,0.5)">
-              ${period}
-            </div>
-            <div class="flex justify-center items-center gap-4 my-6">
-              <div style="font-size: 4.5rem; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2))">
-                ${getWeatherIcon(current.weather)}
-              </div>
-              <div class="temp-display text-gray-800" style="text-shadow: 0 2px 4px rgba(255,255,255,0.5)">${avgTemp}°</div>
-            </div>
-            <div class="text-gray-800 text-2xl font-medium mb-6 opacity-90" style="text-shadow: 0 1px 2px rgba(255,255,255,0.5)">${
-              current.weather
-            }</div>
+        // 主卡片 HTML
+        const heroHtml = `
+          <div class="glass-card p-6 text-center relative overflow-hidden group">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-20 blur-3xl rounded-full pointer-events-none"></div>
             
-            <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-400 border-opacity-30">
-              <div class="glass-card rounded-2xl p-4">
-                <div class="text-4xl mb-2">${advice.rainIcon}</div>
-                <div class="text-gray-800 font-bold text-lg" style="text-shadow: 0 1px 1px rgba(255,255,255,0.5)">${
-                  advice.rainText
-                }</div>
-                <div class="text-gray-700 text-sm opacity-75 mt-1">降雨率 ${
-                  current.rain
-                }</div>
+            <div class="flex flex-col items-center justify-center min-h-[160px]">
+              <img 
+                src="${assets.url}" 
+                alt="${current.weather}" 
+                class="w-40 h-40 object-contain drop-shadow-lg -my-4 transform transition-transform group-hover:scale-110 duration-500" 
+                onerror="this.classList.add('error')"
+              />
+              <div class="fallback-emoji">${assets.emoji}</div>
+              
+              <div class="temp-display mt-2">${avgTemp}°</div>
+              <div class="text-xl font-medium tracking-widest opacity-90 mb-2">${
+                current.weather
+              }</div>
+              
+              <div class="flex items-center justify-center gap-3 text-sm opacity-90 font-medium">
+                <span>最高 ${parseInt(current.maxTemp)}°</span>
+                <span class="opacity-50">|</span>
+                <span>最低 ${parseInt(current.minTemp)}°</span>
               </div>
-              <div class="glass-card rounded-2xl p-4">
-                <div class="text-4xl mb-2">${advice.clothIcon}</div>
-                <div class="text-gray-800 font-bold text-lg" style="text-shadow: 0 1px 1px rgba(255,255,255,0.5)">${
-                  advice.clothText
-                }</div>
-                <div class="text-gray-700 text-sm opacity-75 mt-1">最高溫 ${
-                  current.maxTemp
-                }</div>
-              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-400/20">
+               <div class="rounded-xl p-2 flex flex-col items-center gap-1">
+                 <span class="text-xs opacity-60">降雨機率</span>
+                 <span class="text-lg font-bold flex items-center gap-1">
+                   💧 ${current.rain}
+                 </span>
+               </div>
+               <div class="rounded-xl p-2 flex flex-col items-center gap-1">
+                 <span class="text-xs opacity-60">舒適度</span>
+                 <span class="text-lg font-bold truncate px-1">${
+                   current.comfort || "舒適"
+                 }</span>
+               </div>
             </div>
           </div>
         `;
+        document.getElementById("heroCard").innerHTML = heroHtml;
 
-        // 渲染稍後預報
+        // 稍後預報
         const scrollContainer = document.getElementById("futureForecasts");
         scrollContainer.innerHTML = "";
 
-        const todayDate = new Date().getDate();
-
         others.forEach((f) => {
-          let p = getTimePeriod(f.startTime);
-          const fDate = new Date(f.startTime);
-          if (fDate.getDate() !== todayDate) {
-            p = "明天" + p;
-          }
+          const fAssets = getWeatherAssets(f.weather, f.startTime);
+          const timeLabel = getRelativeTimeLabel(f.startTime);
 
           scrollContainer.innerHTML += `
-            <div class="mini-forecast-card">
-              <div class="text-gray-700 text-xs font-medium mb-2 bg-white bg-opacity-30 inline-block px-3 py-1 rounded-full" style="text-shadow: 0 1px 1px rgba(255,255,255,0.5)">
-                ${p}
-              </div>
-              <div style="font-size: 2.5rem; margin: 8px 0">
-                ${getWeatherIcon(f.weather)}
-              </div>
-              <div class="text-gray-800 font-bold text-lg mb-1" style="text-shadow: 0 1px 1px rgba(255,255,255,0.5)">
-                ${f.minTemp} - ${f.maxTemp}
-              </div>
-              <div class="text-gray-700 text-sm opacity-75">💧 ${f.rain}</div>
-            </div>
-          `;
+             <div class="glass-card p-4 rounded-2xl flex flex-col items-center justify-between text-center gap-2 hover:translate-y-[-2px] transition-transform">
+               <span class="text-sm font-medium opacity-80">${timeLabel}</span>
+               
+               <div class="w-12 h-12 flex items-center justify-center my-1">
+                 <img 
+                    src="${fAssets.url}" 
+                    class="w-full h-full object-contain drop-shadow-sm" 
+                    onerror="this.classList.add('error')"
+                 />
+                 <div class="fallback-emoji text-2xl">${fAssets.emoji}</div>
+               </div>
+
+               <span class="font-bold text-lg">${parseInt(
+                 f.minTemp
+               )}° - ${parseInt(f.maxTemp)}°</span>
+               <div class="text-xs opacity-60 flex items-center gap-1 bg-black/5 px-2 py-0.5 rounded-full dark:bg-white/10">
+                  <span>☔</span> ${f.rain}
+               </div>
+             </div>
+           `;
         });
-
-        // 更新時間
-        const now = new Date();
-        const month = now.getMonth() + 1;
-        const date = now.getDate();
-        const dayIndex = now.getDay();
-        const days = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-
-        document.getElementById(
-          "updateTime"
-        ).textContent = `${month}月${date}日 ${days[dayIndex]}`;
       }
 
-      // 抓取天氣資料
+      // 城市選單功能 (不變)
+      const cities = [
+        "臺北市",
+        "新北市",
+        "桃園市",
+        "臺中市",
+        "臺南市",
+        "高雄市",
+        "基隆市",
+        "新竹市",
+        "嘉義市",
+        "新竹縣",
+        "苗栗縣",
+        "彰化縣",
+        "南投縣",
+        "雲林縣",
+        "嘉義縣",
+        "屏東縣",
+        "宜蘭縣",
+        "花蓮縣",
+        "臺東縣",
+        "澎湖縣",
+        "金門縣",
+        "連江縣",
+      ];
+      const dropdownContent = document.getElementById("dropdownContent");
+
+      cities.forEach((city) => {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.textContent = city;
+        div.onclick = () => {
+          fetchWeather(city);
+          dropdownContent.classList.remove("show");
+        };
+        dropdownContent.appendChild(div);
+      });
+
+      document.getElementById("dropdownBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdownContent.classList.toggle("show");
+      });
+      document.addEventListener("click", () =>
+        dropdownContent.classList.remove("show")
+      );
+
+      // --- 模式切換邏輯 (只切換 body 的 mode class) ---
+      const themeToggle = document.getElementById("themeToggle");
+      const body = document.body;
+
+      themeToggle.addEventListener("click", () => {
+        if (body.classList.contains("dark-mode")) {
+          body.classList.replace("dark-mode", "light-mode");
+        } else {
+          body.classList.replace("light-mode", "dark-mode");
+        }
+      });
+
+      // API 抓取
       async function fetchWeather(city = null) {
+        document.getElementById("loading").style.display = "flex";
         const url = city
           ? `${API_BASE_URL}/${encodeURIComponent(city)}`
           : `${API_BASE_URL}/current`;
 
         try {
-          const delayPromise = new Promise((resolve) =>
-            setTimeout(resolve, 1000)
-          );
-          const fetchPromise = fetch(url).then((res) => {
-            if (!res.ok) throw new Error(`HTTP 錯誤! 狀態碼: ${res.status}`);
-            return res.json();
-          });
-
-          const [_, json] = await Promise.all([delayPromise, fetchPromise]);
-
+          const res = await fetch(url);
+          const json = await res.json();
           if (json.success) {
             renderWeather(json.data);
+            currentCity = json.data.city;
             document.getElementById("loading").style.display = "none";
-            document.getElementById("mainContent").style.display = "block";
-          } else {
-            throw new Error(json.message || "API 回傳錯誤");
+            document.getElementById("mainContent").style.display = "flex";
+            document.getElementById("mainContent").classList.remove("hidden");
           }
         } catch (e) {
           console.error(e);
-          alert(`天氣資料讀取失敗：${e.message}`);
+          alert("讀取天氣失敗，請稍後再試");
           document.getElementById("loading").style.display = "none";
         }
       }
 
-      // 城市下拉選單功能
-      const dropdownBtn = document.getElementById("dropdownBtn");
-      const dropdownContent = document.getElementById("dropdownContent");
-      const selectedCitySpan = document.getElementById("selectedCity");
-
-      // 點擊按鈕開關選單
-      dropdownBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        dropdownContent.classList.toggle("show");
-      });
-
-      // 點擊選單項目
-      document.querySelectorAll(".dropdown-item").forEach((item) => {
-        item.addEventListener("click", function () {
-          // 移除所有 selected class
-          document
-            .querySelectorAll(".dropdown-item")
-            .forEach((i) => i.classList.remove("selected"));
-          // 加入當前 selected
-          this.classList.add("selected");
-
-          // 更新顯示的城市名稱
-          currentCity = this.dataset.city;
-          selectedCitySpan.textContent = currentCity;
-
-          // 關閉選單
-          dropdownContent.classList.remove("show");
-
-          // 抓取該城市資料
-          fetchWeather(currentCity);
-        });
-      });
-
-      // 點擊外部關閉選單
-      document.addEventListener("click", function () {
-        dropdownContent.classList.remove("show");
-      });
-
-      // 初始載入
-      document.addEventListener("DOMContentLoaded", () => {
-        fetchWeather(); // 使用IP自動定位
-      });
+      document.addEventListener("DOMContentLoaded", () => fetchWeather());
     </script>
   </body>
 </html>
