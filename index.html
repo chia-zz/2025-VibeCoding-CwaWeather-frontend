@@ -693,11 +693,11 @@
             container.appendChild(drop);
           }
           // 雨天背景也加點模糊雲
-          for (let i = 0; i < 8; i++) {
+          for (let i = 0; i < 12; i++) {
             const cloud = document.createElement("div");
             cloud.className = "cloud-bottom";
             cloud.style.width = Math.random() * 200 + 150 + "px";
-            cloud.style.height = Math.random() * 150 + 100 + "px";
+            cloud.style.height = Math.random() * 50 + 80 + "px";
             cloud.style.left = Math.random() * 100 + "%";
             cloud.style.animationDuration = Math.random() * 30 + 30 + "s";
             cloud.style.animationDelay = i * 10 + "s";
@@ -722,20 +722,21 @@
             const cloud = document.createElement("div");
             cloud.className = "cloud-bottom"; // 使用新的 class
             cloud.style.width = Math.random() * 200 + 150 + "px";
-            cloud.style.height = Math.random() * 150 + 100 + "px";
+            cloud.style.height = Math.random() * 50 + 80 + "px";
             cloud.style.left = Math.random() * 100 + "%";
+            cloud.style.bottom = Math.random() * 30 + "%";
             cloud.style.animationDuration = Math.random() * 30 + 30 + "s";
             cloud.style.animationDelay = i * 10 + "s";
             container.appendChild(cloud);
           }
         } else {
           // 白天雲朵
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < 8; i++) {
             const cloud = document.createElement("div");
             cloud.className = "cloud-shape";
-            cloud.style.width = Math.random() * 150 + 100 + "px";
-            cloud.style.height = Math.random() * 150 + 100 + "px";
-            cloud.style.top = Math.random() * 40 + "%";
+            cloud.style.width = Math.random() * 200 + 150 + "px";
+            cloud.style.height = Math.random() * 50 + 80 + "px";
+            cloud.style.top = Math.random() * 80 + "%";
             cloud.style.animationDuration = Math.random() * 20 + 20 + "s";
             cloud.style.animationDelay = i * 5 + "s";
             container.appendChild(cloud);
