@@ -146,6 +146,18 @@
           transform: translateX(100vw);
         }
       }
+
+      /* 底部雲朵的樣式，透明度更低 */
+      .cloud-bottom {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(20px);
+        animation: drift linear infinite;
+        bottom: -20%; /* 讓它從底部飄出 */
+        opacity: 0.7;
+      }
+
       .star {
         position: absolute;
         background: white;
@@ -407,11 +419,40 @@
       img.error {
         display: none;
       }
+
+      /* 月相顯示的樣式 */
+      #moonPhaseDisplay {
+        position: absolute;
+        top: 20px; /* 距離頂部 */
+        right: 60px; /* 距離右側 */
+        font-size: 8rem; /* 月亮 Emoji 大小 */
+        z-index: 10; /* 確保在其他內容之上 */
+        opacity: 0; /* 預設隱藏 */
+        transition: opacity 1s ease;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* 讓月亮更顯眼 */
+      }
+      #moonPhaseDisplay.show {
+        opacity: 1;
+      }
+      @media (max-width: 768px) {
+        #moonPhaseDisplay {
+          position: absolute;
+          top: 70px; /* 距離頂部 */
+          right: 40px; /* 距離右側 */
+          font-size: 5rem; /* 月亮 Emoji 大小 */
+          z-index: 10; /* 確保在其他內容之上 */
+          opacity: 0; /* 預設隱藏 */
+          transition: opacity 1s ease;
+          text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* 讓月亮更顯眼 */
+        }
+      }
     </style>
   </head>
 
   <body id="mainBody" class="dark-mode bg-morning">
     <div id="decorations"></div>
+
+    <div id="moonPhaseDisplay" class="text-white"></div>
 
     <div id="loading" class="loading-screen">
       <div class="text-6xl animate-bounce">☁️</div>
@@ -479,9 +520,15 @@
 
     <script>
       const API_BASE_URL = "https://2025vc-weather.zeabur.app/api/weather";
-      // IP 定位 API
       const GEOIP_API_URL = "https://ip-api.com/json?lang=zh-TW";
+      // *** 請替換成你自己的 CWA 授權碼！ ***
+      const CWA_AUTH_KEY = "CWA-B4583B60-3C7D-477D-8F21-99CE4847AE64";
+      const CWA_MOON_API_URL = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0027-001?Authorization=${CWA_AUTH_KEY}&format=JSON&timeFrom=${new Date()
+        .toISOString()
+        .slice(0, 10)}`;
+
       let currentCity = "臺北市"; // 預設城市
+      let cachedMoonPhase = null; // 快取月相資料，避免重複請求
 
       // 3D Icon 設定 (不變)
       const BASE_ICON_URL =
@@ -611,6 +658,7 @@
       setInterval(updateClock, 1000);
       updateClock();
 
+      // --- 修正背景邏輯，加入底部雲朵 (完成問題 1) ---
       function updateBackground(weather, startTime, rainProb) {
         const body = document.getElementById("mainBody");
         const hour = new Date(startTime).getHours();
@@ -644,12 +692,24 @@
             drop.style.animationDelay = Math.random() * 2 + "s";
             container.appendChild(drop);
           }
+          // 雨天背景也加點模糊雲
+          for (let i = 0; i < 8; i++) {
+            const cloud = document.createElement("div");
+            cloud.className = "cloud-bottom";
+            cloud.style.width = Math.random() * 200 + 150 + "px";
+            cloud.style.height = Math.random() * 150 + 100 + "px";
+            cloud.style.left = Math.random() * 100 + "%";
+            cloud.style.animationDuration = Math.random() * 30 + 30 + "s";
+            cloud.style.animationDelay = i * 10 + "s";
+            container.appendChild(cloud);
+          }
         } else if (isNight) {
-          for (let i = 0; i < 40; i++) {
+          for (let i = 0; i < 80; i++) {
+            // 星星
             const star = document.createElement("div");
             star.className = "star";
             star.style.left = Math.random() * 100 + "%";
-            star.style.top = Math.random() * 60 + "%";
+            star.style.top = Math.random() * 80 + "%";
             const size = Math.random() * 3 + 1 + "px";
             star.style.width = size;
             star.style.height = size;
@@ -657,8 +717,20 @@
             star.style.animationDelay = Math.random() * 3 + "s";
             container.appendChild(star);
           }
+          // 新增：底部雲朵
+          for (let i = 0; i < 6; i++) {
+            const cloud = document.createElement("div");
+            cloud.className = "cloud-bottom"; // 使用新的 class
+            cloud.style.width = Math.random() * 200 + 150 + "px";
+            cloud.style.height = Math.random() * 150 + 100 + "px";
+            cloud.style.left = Math.random() * 100 + "%";
+            cloud.style.animationDuration = Math.random() * 30 + 30 + "s";
+            cloud.style.animationDelay = i * 10 + "s";
+            container.appendChild(cloud);
+          }
         } else {
-          for (let i = 0; i < 3; i++) {
+          // 白天雲朵
+          for (let i = 0; i < 6; i++) {
             const cloud = document.createElement("div");
             cloud.className = "cloud-shape";
             cloud.style.width = Math.random() * 150 + 100 + "px";
@@ -671,6 +743,102 @@
         }
       }
 
+      // --- 月相轉換函式 (問題 2 輔助) ---
+      // 0-59 (天) 模擬月相週期，對應到八個主要 Emoji
+      const MOON_PHASES = {
+        0: "🌑", // 新月 (New Moon)
+        7: "🌒", // 眉月 (Waxing Crescent)
+        14: "🌓", // 上弦月 (First Quarter)
+        21: "🌔", // 盈凸月 (Waxing Gibbous)
+        28: "🌕", // 滿月 (Full Moon)
+        35: "🌖", // 虧凸月 (Waning Gibbous)
+        42: "🌗", // 下弦月 (Last Quarter)
+        49: "🌘", // 殘月 (Waning Crescent)
+      };
+
+      function getMoonPhaseEmoji(phaseValue) {
+        // phaseValue 是 CWA API 回傳的 0-100%
+        // 將其轉換為 0-59 的天數模擬值
+        const normalizedPhase = Math.round((phaseValue / 100) * 59);
+        let closestPhase = "🌑";
+
+        // 找出最接近的月相
+        for (const key of Object.keys(MOON_PHASES)
+          .map(Number)
+          .sort((a, b) => a - b)) {
+          if (normalizedPhase >= key) {
+            closestPhase = MOON_PHASES[key];
+          } else {
+            break;
+          }
+        }
+        return closestPhase;
+      }
+
+      // --- 取得中央氣象署月相資料 (修復完成) ---
+      async function fetchMoonPhase() {
+        if (cachedMoonPhase) return cachedMoonPhase;
+
+        // 檢查 CWA 授權碼是否已設定
+        if (CWA_AUTH_KEY === "<YOUR_CWA_AUTHORIZATION_KEY>") {
+          console.error("CWA 授權碼未設定，月相功能無法運作。");
+          return null;
+        }
+
+        try {
+          const res = await fetch(CWA_MOON_API_URL);
+          const json = await res.json();
+
+          if (json.success && json.records.dataid === "F-A0027-001") {
+            // CWA 天文 API 結構複雜，我們需要找到月相 (MoonPhase) 元素
+            const locationData = json.records.location[0];
+            const moonPhaseElement = locationData.weatherElement.find(
+              (el) => el.elementName === "MoonPhase"
+            );
+
+            if (
+              moonPhaseElement &&
+              moonPhaseElement.time &&
+              moonPhaseElement.time[0]
+            ) {
+              const phasePercentage = parseFloat(
+                moonPhaseElement.time[0].elementValue
+              );
+              cachedMoonPhase = phasePercentage;
+              return phasePercentage;
+            }
+          }
+          console.error("CWA API 回傳成功但月相資料結構不符或查無資料。");
+          return null;
+        } catch (e) {
+          console.error("擷取 CWA 月相資料失敗:", e);
+          return null;
+        }
+      }
+
+      // --- 顯示月相 (新的函式) ---
+      async function displayMoonPhase(isNight) {
+        const moonDisplay = document.getElementById("moonPhaseDisplay");
+
+        if (!isNight) {
+          moonDisplay.classList.remove("show");
+          moonDisplay.innerHTML = "";
+          return;
+        }
+
+        const phasePercentage = await fetchMoonPhase();
+
+        if (phasePercentage !== null) {
+          const emoji = getMoonPhaseEmoji(phasePercentage);
+          moonDisplay.innerHTML = emoji;
+          moonDisplay.classList.add("show");
+        } else {
+          // 備用月亮 (當 API 失敗時)
+          moonDisplay.innerHTML = "🌙";
+          moonDisplay.classList.add("show");
+        }
+      }
+
       function renderWeather(data) {
         document.getElementById("selectedCity").textContent = data.city;
         const current = data.forecasts[0];
@@ -678,12 +846,16 @@
 
         updateBackground(current.weather, current.startTime, current.rain);
 
+        // 判斷是否為夜晚，用於顯示月相 (新增)
+        const currentHour = new Date(current.startTime).getHours();
+        const isNight = currentHour >= 18 || currentHour < 6;
+        displayMoonPhase(isNight); // 呼叫顯示月相
+
         const assets = getWeatherAssets(current.weather, current.startTime);
         const avgTemp = Math.round(
           (parseInt(current.maxTemp) + parseInt(current.minTemp)) / 2
         );
 
-        // 取得服裝建議
         const advice = getAdvice(current.rain, current.maxTemp);
 
         // 1. 主卡片 HTML
@@ -715,7 +887,7 @@
         `;
         document.getElementById("heroCard").innerHTML = heroHtml;
 
-        // 2. 服裝建議卡片 HTML (使用 Tailwind 優化)
+        // 2. 服裝建議卡片 HTML
         const adviceHtml = `
             <div class="grid grid-cols-2 gap-3 text-center">
                 <div class="p-3 rounded-xl flex flex-col items-center justify-center bg-white/10 dark:bg-black/20">
@@ -833,7 +1005,7 @@
         }
       });
 
-      // --- IP 定位邏輯 (解決問題 1) ---
+      // IP 定位邏輯 (不變)
       async function detectCityByIP() {
         document.getElementById("loadingText").textContent =
           "正在嘗試定位您的城市...";
@@ -842,12 +1014,8 @@
           const data = await res.json();
 
           if (data.status === "success" && data.city) {
-            // ip-api.com 回傳的城市名稱
             let detectedCity = data.city;
 
-            // 簡易轉換（因為 API 可能回傳簡體或非標準名稱，這裡盡量轉為台灣標準城市名）
-            // 這裡的邏輯需要你的後端 API 支援，或者我們直接用區域名稱去查。
-            // 由於 CWA API 只支援直轄市/縣市名稱，我們使用區域名稱來對應。
             const cityMap = {
               臺北: "臺北市",
               新北: "新北市",
@@ -915,10 +1083,9 @@
             document.getElementById("mainContent").style.display = "flex";
             document.getElementById("mainContent").classList.remove("hidden");
           } else {
-            // 處理 API 雖然成功但沒有天氣資料 (例如城市名稱不符)
             console.error("API 查無資料:", json.message);
             alert(`查無 ${finalCity} 的天氣資料，請手動選擇其他城市。`);
-            fetchWeather("臺北市"); // 回到預設城市
+            fetchWeather("臺北市");
           }
         } catch (e) {
           console.error("讀取天氣失敗:", e);
