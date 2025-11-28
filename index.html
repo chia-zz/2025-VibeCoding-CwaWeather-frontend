@@ -25,7 +25,7 @@
             colors: {
               glass: {
                 dark: "rgba(30, 30, 30, 0.4)",
-                light: "rgba(255, 255, 255, 0.5)", // 淺色玻璃透明度調高一點
+                light: "rgba(255, 255, 255, 0.5)",
               },
             },
           },
@@ -48,21 +48,17 @@
         overflow-x: hidden;
         transition: background 1.5s ease, color 0.5s ease;
         position: relative;
-        /* 預設顏色和文字顏色，讓它們可以被時間/模式 Class 覆蓋 */
         color: #ffffff;
       }
 
-      /* ** 新增：淺色模式下文字變深 ** */
       body.light-mode {
         color: #1f2937;
       }
-      /* ** 修正：深色模式下文字變白 ** */
       body.dark-mode {
         color: #ffffff;
       }
 
       /* --- 背景漸層 (時間控制) --- */
-      /* 這些 Class 將由 JS 依據時間控制，不受 light/dark 模式影響 */
       .bg-dawn {
         background: linear-gradient(
           to bottom,
@@ -131,10 +127,7 @@
       /* 背景層 (固定位置，只做動畫/裝飾) */
       #decorations {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         pointer-events: none;
         z-index: -1;
       }
@@ -190,21 +183,20 @@
         border-radius: 24px;
       }
 
-      /* 深色模式卡片樣式 (在 dark-mode class 下生效) */
       body.dark-mode .glass-card {
         background: rgba(30, 30, 30, 0.4);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
-
-      /* 淺色模式卡片樣式 (在 light-mode class 下生效) */
       body.light-mode .glass-card {
         background: rgba(255, 255, 255, 0.5);
         box-shadow: 0 8px 32px rgba(100, 100, 200, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.8); /* 淺色模式邊框更明顯 */
+        border: 1px solid rgba(255, 255, 255, 0.8);
       }
 
-      /* --- 下拉選單 (受 light/dark 模式控制) --- */
+      /* --- 下拉選單/切換開關 (樣式碼省略，因為保持不變，但記得要在 final HTML 裡) --- */
+
+      /* 這裡省略了 dropdown 和 theme-switch 的長篇 CSS，保持其功能和外觀不變 */
       .city-dropdown {
         position: relative;
         width: 100%;
@@ -223,7 +215,6 @@
         cursor: pointer;
         transition: all 0.2s;
       }
-
       body.dark-mode .dropdown-btn {
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -232,7 +223,6 @@
         background: rgba(255, 255, 255, 0.7);
         border: 1px solid white;
       }
-
       .dropdown-content {
         display: none;
         position: absolute;
@@ -245,7 +235,6 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         z-index: 100;
       }
-
       body.dark-mode .dropdown-content {
         background: rgba(30, 30, 30, 0.95);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -254,11 +243,9 @@
         background: rgba(255, 255, 255, 0.95);
         border: 1px solid white;
       }
-
       .dropdown-content.show {
         display: block;
       }
-
       .dropdown-item {
         padding: 12px 16px;
         cursor: pointer;
@@ -270,7 +257,6 @@
       body.light-mode .dropdown-item {
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       }
-
       .dropdown-item:hover {
         opacity: 0.8;
       }
@@ -283,7 +269,6 @@
         font-weight: bold;
       }
 
-      /* --- 可愛切換開關 (受 light/dark 模式控制) --- */
       .theme-switch {
         position: relative;
         width: 60px;
@@ -296,8 +281,6 @@
         transition: all 0.5s ease;
         overflow: hidden;
       }
-
-      /* 背景/邊框跟著模式走 */
       body.dark-mode .theme-switch {
         background: #1a1c29;
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -306,7 +289,6 @@
         background: #89cff0;
         border: 1px solid rgba(255, 255, 255, 0.5);
       }
-
       .theme-handle {
         position: absolute;
         width: 22px;
@@ -319,14 +301,11 @@
       }
       .theme-handle::before,
       .theme-handle::after {
-        /* 月球坑洞 */
         content: "";
         position: absolute;
         border-radius: 50%;
         transition: opacity 0.3s;
       }
-
-      /* 深色模式：月亮 */
       body.dark-mode .theme-handle {
         background: #d1d5db;
       }
@@ -346,8 +325,6 @@
         background: #9ca3af;
         opacity: 1;
       }
-
-      /* 淺色模式：太陽 */
       body.light-mode .theme-handle {
         transform: translateX(30px);
         background: #fcd34d;
@@ -356,8 +333,6 @@
       body.light-mode .theme-handle::after {
         opacity: 0;
       }
-
-      /* 星星/雲朵裝飾 */
       .switch-decor {
         position: absolute;
         font-size: 10px;
@@ -371,7 +346,6 @@
         left: 8px;
         color: white;
       }
-
       body.dark-mode .stars {
         opacity: 1;
         transform: translateY(0);
@@ -380,7 +354,6 @@
         opacity: 0;
         transform: translateY(10px);
       }
-
       body.light-mode .stars {
         opacity: 0;
         transform: translateY(-10px);
@@ -442,7 +415,9 @@
 
     <div id="loading" class="loading-screen">
       <div class="text-6xl animate-bounce">☁️</div>
-      <p class="text-lg mt-4 font-medium tracking-wider">正在觀測天空...</p>
+      <p class="text-lg mt-4 font-medium tracking-wider" id="loadingText">
+        正在嘗試定位...
+      </p>
     </div>
 
     <div class="relative z-0 min-h-screen flex flex-col p-6 max-w-md mx-auto">
@@ -483,9 +458,11 @@
           <p id="clockDate" class="text-lg opacity-80 mt-1">--月--日</p>
         </div>
 
-        <div id="heroCard"></div>
+        <div id="heroCard" class="mb-6"></div>
 
-        <div class="mt-8">
+        <div id="adviceCard" class="glass-card p-4 mb-8"></div>
+
+        <div>
           <h3
             class="opacity-80 text-sm font-bold mb-3 px-1 flex items-center gap-2"
           >
@@ -502,9 +479,11 @@
 
     <script>
       const API_BASE_URL = "https://2025vc-weather.zeabur.app/api/weather";
-      let currentCity = "臺北市";
+      // IP 定位 API
+      const GEOIP_API_URL = "https://ip-api.com/json?lang=zh-TW";
+      let currentCity = "臺北市"; // 預設城市
 
-      // 3D Icon 設定
+      // 3D Icon 設定 (不變)
       const BASE_ICON_URL =
         "https://cdn.jsdelivr.net/gh/microsoft/fluentui-system-icons@master/assets/Weather";
       const ICON_MAP = {
@@ -564,7 +543,6 @@
         else period = "深夜";
 
         if (diffDays === 0) {
-          // 檢查是否是現在這個時段
           const currentHour = now.getHours();
           if (
             (hour >= 6 && hour < 18 && currentHour < 18) ||
@@ -572,7 +550,7 @@
             (hour < 6 && currentHour >= 18) ||
             currentHour < 6
           ) {
-            return period; // 例如「早上」
+            return period;
           }
           return `今天${period}`;
         } else if (diffDays === 1) {
@@ -580,6 +558,42 @@
         } else {
           return `後天${period}`;
         }
+      }
+
+      // --- 服裝建議函式 (優化版，解決問題 2) ---
+      function getAdvice(rainProb, maxTemp) {
+        let rainIcon = "👍";
+        let rainText = "穩啦不用帶傘";
+        if (parseInt(rainProb) > 60) {
+          rainIcon = "⛈️";
+          rainText = "怕！豪雨警告！";
+        } else if (parseInt(rainProb) > 30) {
+          rainIcon = "☔";
+          rainText = "欸欸記得帶傘";
+        }
+
+        const temp = parseInt(maxTemp);
+        let clothIcon = "👕";
+        let clothText = "Easy短袖就行";
+
+        if (temp >= 30) {
+          clothIcon = "🥵";
+          clothText = "超熱欸！記得防曬";
+        } else if (temp >= 25) {
+          clothIcon = "🎽";
+          clothText = "今仔日穿短袖就好";
+        } else if (temp >= 20) {
+          clothIcon = "👚";
+          clothText = "微涼 阿嬤讓你帶薄外套";
+        } else if (temp >= 15) {
+          clothIcon = "🧥";
+          clothText = "有冷欸 阿嬤讓你穿厚一點";
+        } else {
+          clothIcon = "🧤";
+          clothText = "太冷啦 阿嬤讓你全副武裝啦QAQ";
+        }
+
+        return { rainIcon, rainText, clothIcon, clothText };
       }
 
       function updateClock() {
@@ -597,18 +611,15 @@
       setInterval(updateClock, 1000);
       updateClock();
 
-      // --- 修正背景邏輯，只依時間判斷 ---
       function updateBackground(weather, startTime, rainProb) {
         const body = document.getElementById("mainBody");
         const hour = new Date(startTime).getHours();
 
-        // 1. 移除所有背景 Class
         body.className = body.className
           .split(" ")
           .filter((c) => !c.startsWith("bg-"))
           .join(" ");
 
-        // 2. 判斷並加入新的背景 Class
         if (parseInt(rainProb) > 60 || weather.includes("雨"))
           body.classList.add("bg-rainy");
         else if (hour >= 5 && hour < 7) body.classList.add("bg-dawn");
@@ -618,7 +629,6 @@
         else if (hour >= 18 && hour < 20) body.classList.add("bg-evening");
         else body.classList.add("bg-night");
 
-        // 3. 更新背景裝飾 (動畫)
         const container = document.getElementById("decorations");
         container.innerHTML = "";
         const isNight = hour >= 18 || hour < 5;
@@ -666,7 +676,6 @@
         const current = data.forecasts[0];
         const others = data.forecasts.slice(1);
 
-        // **修正點：呼叫背景更新函式 (只依時間)**
         updateBackground(current.weather, current.startTime, current.rain);
 
         const assets = getWeatherAssets(current.weather, current.startTime);
@@ -674,7 +683,10 @@
           (parseInt(current.maxTemp) + parseInt(current.minTemp)) / 2
         );
 
-        // 主卡片 HTML
+        // 取得服裝建議
+        const advice = getAdvice(current.rain, current.maxTemp);
+
+        // 1. 主卡片 HTML
         const heroHtml = `
           <div class="glass-card p-6 text-center relative overflow-hidden group">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-20 blur-3xl rounded-full pointer-events-none"></div>
@@ -699,26 +711,39 @@
                 <span>最低 ${parseInt(current.minTemp)}°</span>
               </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-400/20">
-               <div class="rounded-xl p-2 flex flex-col items-center gap-1">
-                 <span class="text-xs opacity-60">降雨機率</span>
-                 <span class="text-lg font-bold flex items-center gap-1">
-                   💧 ${current.rain}
-                 </span>
-               </div>
-               <div class="rounded-xl p-2 flex flex-col items-center gap-1">
-                 <span class="text-xs opacity-60">舒適度</span>
-                 <span class="text-lg font-bold truncate px-1">${
-                   current.comfort || "舒適"
-                 }</span>
-               </div>
-            </div>
           </div>
         `;
         document.getElementById("heroCard").innerHTML = heroHtml;
 
-        // 稍後預報
+        // 2. 服裝建議卡片 HTML (使用 Tailwind 優化)
+        const adviceHtml = `
+            <div class="grid grid-cols-2 gap-3 text-center">
+                <div class="p-3 rounded-xl flex flex-col items-center justify-center bg-white/10 dark:bg-black/20">
+                    <span class="text-3xl advice-icon">${
+                      advice.clothIcon
+                    }</span>
+                    <span class="text-xs opacity-70 mt-1">穿搭建議</span>
+                    <span class="text-sm font-bold mt-1">${
+                      advice.clothText
+                    }</span>
+                </div>
+                <div class="p-3 rounded-xl flex flex-col items-center justify-center bg-white/10 dark:bg-black/20">
+                    <span class="text-3xl advice-icon">${advice.rainIcon}</span>
+                    <span class="text-xs opacity-70 mt-1">帶傘提醒</span>
+                    <span class="text-sm font-bold mt-1">${
+                      advice.rainText
+                    }</span>
+                </div>
+            </div>
+            <div class="text-xs opacity-50 mt-4 text-center">
+                舒適度: ${current.comfort || "無資料"} • 降雨機率: ${
+          current.rain
+        }
+            </div>
+        `;
+        document.getElementById("adviceCard").innerHTML = adviceHtml;
+
+        // 3. 稍後預報
         const scrollContainer = document.getElementById("futureForecasts");
         scrollContainer.innerHTML = "";
 
@@ -796,7 +821,7 @@
         dropdownContent.classList.remove("show")
       );
 
-      // --- 模式切換邏輯 (只切換 body 的 mode class) ---
+      // 模式切換邏輯 (不變)
       const themeToggle = document.getElementById("themeToggle");
       const body = document.body;
 
@@ -808,12 +833,77 @@
         }
       });
 
+      // --- IP 定位邏輯 (解決問題 1) ---
+      async function detectCityByIP() {
+        document.getElementById("loadingText").textContent =
+          "正在嘗試定位您的城市...";
+        try {
+          const res = await fetch(GEOIP_API_URL);
+          const data = await res.json();
+
+          if (data.status === "success" && data.city) {
+            // ip-api.com 回傳的城市名稱
+            let detectedCity = data.city;
+
+            // 簡易轉換（因為 API 可能回傳簡體或非標準名稱，這裡盡量轉為台灣標準城市名）
+            // 這裡的邏輯需要你的後端 API 支援，或者我們直接用區域名稱去查。
+            // 由於 CWA API 只支援直轄市/縣市名稱，我們使用區域名稱來對應。
+            const cityMap = {
+              臺北: "臺北市",
+              新北: "新北市",
+              桃園: "桃園市",
+              台中: "臺中市",
+              台南: "臺南市",
+              高雄: "高雄市",
+              基隆: "基隆市",
+              新竹市: "新竹市",
+              嘉義市: "嘉義市",
+              新竹縣: "新竹縣",
+              苗栗: "苗栗縣",
+              彰化: "彰化縣",
+              南投: "南投縣",
+              雲林: "雲林縣",
+              嘉義縣: "嘉義縣",
+              屏東: "屏東縣",
+              宜蘭: "宜蘭縣",
+              花蓮: "花蓮縣",
+              台東: "臺東縣",
+              澎湖: "澎湖縣",
+              金門: "金門縣",
+              連江: "連江縣",
+            };
+
+            let foundCity = Object.keys(cityMap).find((key) =>
+              detectedCity.includes(key)
+            );
+
+            if (foundCity) {
+              currentCity = cityMap[foundCity];
+              document.getElementById(
+                "loadingText"
+              ).textContent = `偵測到您在 ${currentCity}！`;
+              return currentCity;
+            }
+          }
+        } catch (e) {
+          console.warn("IP 定位失敗或 IP 查詢 API 請求受限:", e);
+        }
+
+        document.getElementById("loadingText").textContent =
+          "定位失敗，預設顯示臺北市天氣。";
+        return "臺北市";
+      }
+
       // API 抓取
       async function fetchWeather(city = null) {
         document.getElementById("loading").style.display = "flex";
-        const url = city
-          ? `${API_BASE_URL}/${encodeURIComponent(city)}`
-          : `${API_BASE_URL}/current`;
+
+        let finalCity = city;
+        if (!finalCity) {
+          finalCity = await detectCityByIP(); // 如果沒有指定城市，就執行定位
+        }
+
+        const url = `${API_BASE_URL}/${encodeURIComponent(finalCity)}`;
 
         try {
           const res = await fetch(url);
@@ -824,10 +914,15 @@
             document.getElementById("loading").style.display = "none";
             document.getElementById("mainContent").style.display = "flex";
             document.getElementById("mainContent").classList.remove("hidden");
+          } else {
+            // 處理 API 雖然成功但沒有天氣資料 (例如城市名稱不符)
+            console.error("API 查無資料:", json.message);
+            alert(`查無 ${finalCity} 的天氣資料，請手動選擇其他城市。`);
+            fetchWeather("臺北市"); // 回到預設城市
           }
         } catch (e) {
-          console.error(e);
-          alert("讀取天氣失敗，請稍後再試");
+          console.error("讀取天氣失敗:", e);
+          alert("讀取天氣失敗，請稍後再試。");
           document.getElementById("loading").style.display = "none";
         }
       }
